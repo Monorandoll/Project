@@ -1,0 +1,135 @@
+```
+section .data
+        Plain dd 'trees', 0xA,0h
+        Pass dd 'MARCH', 0xA, 0h
+        result dd 0,0,0,0,0,0
+        filename db 'output.txt', 0h
+
+        content db 'Plain Text:', 0h
+        len equ $ - content
+
+         content2 db 'Key:', 0h
+         len2 equ $ - content2
+
+         content3 db 'Encrypted:',0xA,0h
+         len3 equ $ - content3
+
+         content4 db 'Decrypted:', 0h
+         len4 equ $ - content4
+
+        newline db 10, 0h
+
+        space db 0xA, 0h
+section .bss
+        fd_out resd 1
+
+section .text
+        global _start
+
+_start:
+        ;creating
+        mov eax,8
+        mov ebx, filename
+        mov ecx, 0711o
+        int 0x80
+
+        ;opening
+        mov eax,5
+        mov ebx,filename
+        mov ecx,2
+        mov edx, 0777o
+        int 0x80
+
+        mov [fd_out] ,eax
+
+    ;encrypt
+        mov eax, 5
+        mov ecx, Plain
+        mov edx, Pass
+        mov ebx, result
+encrypt_loop:
+        mov esi, [ecx]
+        xor esi, [edx]
+        mov [ebx], esi
+        add ecx, 4
+        add edx, 4
+        add ebx, 4
+        dec eax
+        jnz encrypt_loop
+
+        ;decrypt
+        mov eax, 5
+        mov ecx, result
+        mov edx, Pass
+        mov ebx, Plain
+decrypt_loop:
+        mov esi, [ecx]
+        xor esi, [edx]
+        mov [ebx], esi
+        add ecx, 4
+        add edx, 4
+        add ebx, 4
+        dec eax
+        jnz decrypt_loop
+
+    ;write to file
+    mov eax,4
+    mov ebx,[fd_out]
+    mov ecx,content
+    mov edx, len
+    int 0x80
+
+    ;print Plaindata
+    mov eax,4
+    mov ebx,[fd_out]
+    mov ecx, Plain
+    mov edx,5
+    int 0x80
+
+    ;newline 
+    mov eax, 4
+    mov ebx, [fd_out]
+    mov ecx, newline
+    mov edx, 1
+    int 0x80
+
+    ;printing key label
+    mov eax,4
+    mov ebx, [fd_out]
+    mov ecx,content2
+    mov edx, len2
+    int 0x80
+
+    ;print keydata
+    mov eax,4
+    mov ebx,[fd_out]
+    mov ecx, Pass
+    mov edx, 5
+    int 0x80
+
+        ;newline
+        mov eax, 4
+        mov ebx, [fd_out]
+        mov ecx, space
+        mov edx, 1
+        int 0x80
+
+        ;write encrypted label
+        mov eax,4
+        mov ebx, [fd_out]
+        mov ecx, content3
+        mov edx, len3
+        int 0x80
+
+        ;print encypted data    
+        mov eax,4
+        mov ebx, [fd_out]
+        mov ecx, result
+        mov edx, 5
+        int 0x80
+
+
+exit:
+    mov eax,1
+    int 0x80
+```
